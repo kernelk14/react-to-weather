@@ -18,7 +18,7 @@ function Location({ lat, lon }: Coords) {
         queryKey: ["results"],
         queryFn: async () => {
             const resp = await fetch(
-                `https://api.opencagedata.com/geocode/v1/json?q=${lat},+${lon}&key=${process.env.GEOLOCATION_API}&language=en&pretty=1`,
+                `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${process.env.GEOLOCATION_API}`,
             );
             return await resp.json();
         },
@@ -30,17 +30,29 @@ function Location({ lat, lon }: Coords) {
     console.log(data.results[0].formatted);
     return (
         <>
-            <h3 className="pico-color-jade-400" align="center">
-                {data.results[0].formatted}
-            </h3>
+            <center>
+                <h3 className="pico-color-jade-400">
+                    {data.results[0].formatted}
+                </h3>
+            </center>
             <div>{isFetching ? "Updating..." : ""}</div>
         </>
     );
 }
 
 function Weather() {
-    const lat = 14.2157;
-    const lon = 120.9714;
+    let lat = 0;
+    let lon = 0;
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+            lat = position.coords.latitude;
+            lon = position.coords.longitude;
+            console.log(`lat: ${lat}, lon: ${lon}`);
+        });
+    }
+
+    // const lat = 14.2157;
+    // const lon = 120.9714;
     // const lat = 55.8204953;
     // const lon = 78.866158;
     const { isPending, error, data, isFetching } = useQuery({
@@ -60,6 +72,7 @@ function Weather() {
     const temp = data.hourly.temperature_2m;
     const code = data.hourly.weather_code;
     const isDay = data.current.is_day;
+    console.log(isDay);
     const control = new Date();
     let currentDate = "";
     let currentTemp = 0;
@@ -78,26 +91,40 @@ function Weather() {
     }
     const currentCode = code[dateArray.indexOf(currentDate)];
     return (
-        <div className="container">
+        <main className="container">
+            <center>
+                <h4>{currentDate}</h4>
+            </center>
             <Location lat={lat} lon={lon} />
-            <Forecast wmo={currentCode.toString()} />
-            <h4 align="center">Current Date: {currentDate}</h4>
-            <h4 align="center">
-                Current Temp: {currentTemp} {data.hourly_units.temperature_2m}
-            </h4>
+            <Forecast wmo={currentCode.toString()} day={isDay} />
+            <center>
+                <h4>
+                    Current Temp: {currentTemp}{" "}
+                    {data.hourly_units.temperature_2m}
+                </h4>
+            </center>
 
             <div>{isFetching ? "Updating..." : ""}</div>
-        </div>
+            <br />
+        </main>
     );
 }
 
 function App() {
     return (
-        <main className="container">
-            <QueryClientProvider client={queryClient}>
-                <Weather />
-            </QueryClientProvider>
-        </main>
+        <>
+            <header className="container">
+                <center>
+                    <h1>Basic Weather Site</h1>
+                </center>
+            </header>
+            <main className="container">
+                <br />
+                <QueryClientProvider client={queryClient}>
+                    <Weather />
+                </QueryClientProvider>
+            </main>
+        </>
     );
 }
 
