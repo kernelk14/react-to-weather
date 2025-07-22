@@ -10,7 +10,6 @@ function Forecast({ wmo, day }: Props) {
     const wmo_code = wmo;
 
     if (day == 1) {
-        console.log("day");
         return (
             <>
                 <center>
@@ -22,7 +21,6 @@ function Forecast({ wmo, day }: Props) {
             </>
         );
     } else {
-        console.log("night");
         return (
             <>
                 <center>

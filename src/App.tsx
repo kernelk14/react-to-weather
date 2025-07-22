@@ -51,6 +51,7 @@ function Weather() {
         });
     }
 
+    // THIS IS FOR DEBUGGING PURPOSES ONLY.
     // const lat = 14.2157;
     // const lon = 120.9714;
     // const lat = 55.8204953;
@@ -72,8 +73,8 @@ function Weather() {
     const temp = data.hourly.temperature_2m;
     const code = data.hourly.weather_code;
     const isDay = data.current.is_day;
-    console.log(isDay);
     const control = new Date();
+    console.log();
     let currentDate = "";
     let currentTemp = 0;
     const tempArray = [];
@@ -94,13 +95,19 @@ function Weather() {
         <main className="container">
             <center>
                 <h4>{currentDate}</h4>
+                <h6>
+                    As of{" "}
+                    <strong className="pico-color-blue-500">
+                        {control.toLocaleTimeString()}
+                    </strong>
+                </h6>
             </center>
+            <br />
             <Location lat={lat} lon={lon} />
             <Forecast wmo={currentCode.toString()} day={isDay} />
             <center>
                 <h4>
-                    Current Temp: {currentTemp}{" "}
-                    {data.hourly_units.temperature_2m}
+                    {currentTemp} {data.hourly_units.temperature_2m}
                 </h4>
             </center>
 
