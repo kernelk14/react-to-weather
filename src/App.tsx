@@ -43,7 +43,7 @@ function Weather() {
         queryKey: [""],
         queryFn: async () => {
             const response = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m&forecast_days=1`,
+                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weather_code&forecast_days=1`,
             );
             return await response.json();
         },
@@ -80,7 +80,9 @@ function Weather() {
             <h3>Longitude: {data.longitude}</h3>
             <Location lat={lat} lon={lon} />
             <h4>Current Date: {currentDate}</h4>
-            <h4>Current Temp: {currentTemp}</h4>
+            <h4>
+                Current Temp: {currentTemp} {data.hourly_units.temperature_2m}
+            </h4>
             <div>{isFetching ? "Updating..." : ""}</div>
         </div>
     );
