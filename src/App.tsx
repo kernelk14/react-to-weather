@@ -5,8 +5,7 @@ import {
 } from "@tanstack/react-query";
 
 import Forecast from "./components/Forecast";
-
-const queryClient = new QueryClient();
+import { useState } from "react";
 
 interface Coords {
     lat: number;
@@ -14,11 +13,13 @@ interface Coords {
 }
 
 function Location({ lat, lon }: Coords) {
+    console.log("Location lat:", lat);
+    console.log("Location lon:", lon);
     const { isPending, error, data, isFetching } = useQuery({
         queryKey: ["results"],
         queryFn: async () => {
             const resp = await fetch(
-                `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${process.env.GEOLOCATION_API}`,
+                `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${process.env.GEOLOCATION_API}&language=en&pretty=1`,
             );
             return await resp.json();
         },
@@ -40,17 +41,12 @@ function Location({ lat, lon }: Coords) {
     );
 }
 
-function Weather() {
-    let lat = 0;
-    let lon = 0;
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function (position) {
-            lat = position.coords.latitude;
-            lon = position.coords.longitude;
-            console.log(`lat: ${lat}, lon: ${lon}`);
-        });
-    }
+interface Coords {
+    lat: number;
+    lon: number;
+}
 
+function Weather({ lat, lon }: Coords) {
     // THIS IS FOR DEBUGGING PURPOSES ONLY.
     // const lat = 14.2157;
     // const lon = 120.9714;
@@ -60,7 +56,7 @@ function Weather() {
         queryKey: [""],
         queryFn: async () => {
             const response = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weather_code&forecast_days=1&current=is_day`,
+                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,weather_code&current=is_day&timezone=auto`,
             );
             return await response.json();
         },
@@ -72,63 +68,93 @@ function Weather() {
     const time = data.hourly.time;
     const temp = data.hourly.temperature_2m;
     const code = data.hourly.weather_code;
-    const isDay = data.current.is_day;
+    const isDay: number = data.current.is_day;
+    console.log(data);
     const control = new Date();
-    console.log();
     let currentDate = "";
     let currentTemp = 0;
     const tempArray = [];
     const dateArray = [];
+    let currentCode = 0;
 
     for (let i = 0; i < time.length; i++) {
         const dateObject = new Date(time[i]);
         const dateString = dateObject.toDateString();
         dateArray.push(dateString);
         tempArray.push(temp[i]);
+        // console.log("Control date: ", control.toDateString());
+        // console.log("Output date: ", dateString);
         if (control.toDateString() == dateString) {
-            currentDate = dateString;
-            currentTemp = tempArray[dateArray.indexOf(dateString)];
+            // currentDate = dateString;
+            currentDate = control.toDateString();
+            currentTemp = tempArray[dateArray.indexOf(currentDate)];
+            currentCode = code[dateArray.indexOf(currentDate)];
         }
     }
-    const currentCode = code[dateArray.indexOf(currentDate)];
-    return (
-        <main className="container">
-            <center>
-                <h4>{currentDate}</h4>
-                <h6>
-                    As of{" "}
-                    <strong className="pico-color-blue-500">
-                        {control.toLocaleTimeString()}
-                    </strong>
-                </h6>
-            </center>
-            <br />
-            <Location lat={lat} lon={lon} />
-            <Forecast wmo={currentCode.toString()} day={isDay} />
-            <center>
-                <h4>
-                    {currentTemp} {data.hourly_units.temperature_2m}
-                </h4>
-            </center>
 
-            <div>{isFetching ? "Updating..." : ""}</div>
-            <br />
-        </main>
-    );
-}
-
-function App() {
     return (
         <>
             <header className="container">
                 <center>
-                    <h1>Basic Weather Site</h1>
+                    <h1>Weather for {isDay ? "Today" : "Tonight"}</h1>
                 </center>
             </header>
+            <br />
             <main className="container">
+                <center>
+                    <h4>{currentDate}</h4>
+                    <h6>
+                        As of{" "}
+                        <strong className="pico-color-blue-500">
+                            {control.toLocaleTimeString()}
+                        </strong>
+                    </h6>
+                </center>
                 <br />
+                <center>
+                    <h4>
+                        <Location lat={lat} lon={lon} />
+                    </h4>
+                </center>
+                <Forecast wmo={currentCode.toString()} day={isDay} />
+                <center>
+                    <h4>
+                        {currentTemp} {data.hourly_units.temperature_2m}
+                    </h4>
+                </center>
+
+                <div>{isFetching ? "Updating..." : ""}</div>
+                <br />
+            </main>
+        </>
+    );
+}
+const queryClient = new QueryClient();
+
+function App() {
+    const [lat, setLat] = useState(0);
+    const [lon, setLon] = useState(0);
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+            console.log(`lat: ${lat}, lon: ${lon}`);
+            setLat(position.coords.latitude);
+            setLon(position.coords.longitude);
+            // lat = position.coords.latitude;
+            // lon = position.coords.longitude;
+            console.log(`lat: ${lat}, lon: ${lon}`);
+        });
+    } else {
+        console.error("Geolocation is not supported by this browser.");
+    }
+
+    console.log(navigator.geolocation);
+    console.log("Latitude passed on navigator.geolocation: ", lat);
+    console.log("Longitude passed on navigator.geolocation: ", lon);
+    return (
+        <>
+            <main className="container">
                 <QueryClientProvider client={queryClient}>
-                    <Weather />
+                    <Weather lat={lat} lon={lon} />
                 </QueryClientProvider>
             </main>
         </>
