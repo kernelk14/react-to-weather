@@ -41,11 +41,6 @@ function Location({ lat, lon }: Coords) {
     );
 }
 
-interface Coords {
-    lat: number;
-    lon: number;
-}
-
 function Weather({ lat, lon }: Coords) {
     // THIS IS FOR DEBUGGING PURPOSES ONLY.
     // const lat = 14.2157;
